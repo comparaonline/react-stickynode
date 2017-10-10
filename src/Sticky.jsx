@@ -197,9 +197,10 @@ class Sticky extends Component {
      * Update Sticky position.
      */
     update () {
+
         var disabled = !this.props.enabled ||
-            this.state.bottomBoundary - this.state.topBoundary <= this.state.height ||
-            (this.state.width === 0 && this.state.height === 0);
+            (!this.props.stickToBottom && (this.state.bottomBoundary - this.state.topBoundary <= this.state.height ||
+            (this.state.width === 0 && this.state.height === 0)));
 
         if (disabled) {
             if (this.state.status !== STATUS_ORIGINAL) {
@@ -217,7 +218,8 @@ class Sticky extends Component {
         // There are 2 principles to make sure Sticky won't get wrong so much:
         // 1. Reset Sticky to the original postion when "top" <= topBoundary
         // 2. Release Sticky to the bottom boundary when "bottom" >= bottomBoundary
-        if (top <= this.state.topBoundary) { // #1
+
+        if (!this.props.stickToBottom ? top <= this.state.topBoundary : this.refs.outer.getBoundingClientRect().bottom <= winHeight) { // #1
             this.reset();
         } else if (bottom >= this.state.bottomBoundary) { // #2
             this.stickyBottom = this.state.bottomBoundary;
@@ -225,6 +227,7 @@ class Sticky extends Component {
             this.release(this.stickyTop);
         } else {
             if (this.state.height > winHeight - this.state.top) {
+
                 // In this case, Sticky is higher then viewport minus top offset
                 switch (this.state.status) {
                     case STATUS_ORIGINAL:
@@ -316,6 +319,7 @@ class Sticky extends Component {
     }
 
     componentDidMount () {
+
         // Only initialize the globals if this is the first
         // time this component type has been mounted
         if (!win) {
@@ -365,7 +369,7 @@ class Sticky extends Component {
         // TODO, "overflow: auto" prevents collapse, need a good way to get children height
         var innerStyle = {
             position: this.state.status === STATUS_FIXED ? 'fixed' : 'relative',
-            top: this.state.status === STATUS_FIXED ? '0px' : '',
+            [this.props.stickToBottom === false ? 'top' : 'bottom']: this.state.status === STATUS_FIXED ? '0px' : '',
             zIndex: this.props.innerZ
         };
         var outerStyle = {};
@@ -402,7 +406,8 @@ Sticky.defaultProps = {
     enableTransforms: true,
     activeClass: 'active',
     releasedClass: 'released',
-    onStateChange: null
+    onStateChange: null,
+    stickToBottom: false
 };
 
 /**
@@ -431,7 +436,8 @@ Sticky.propTypes = {
     innerZ: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number
-    ])
+    ]),
+    stickToBottom: PropTypes.bool
 };
 
 Sticky.STATUS_ORIGINAL = STATUS_ORIGINAL;
